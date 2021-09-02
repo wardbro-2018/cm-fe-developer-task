@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 // @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
+import Avatar from "@material-ui/core/Avatar";
+import Radio from "@material-ui/core/Radio";
 // core components
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
@@ -8,6 +10,7 @@ import Table from "components/Table/Table.js";
 import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardBody from "components/Card/CardBody.js";
+import data from "../../assets/data/HR.json";
 
 const styles = {
   cardCategoryWhite: {
@@ -37,34 +40,62 @@ const styles = {
       lineHeight: "1",
     },
   },
+  departmentTable: {
+    "& tbody tr:hover": {
+      background: "lavender",
+    },
+  },
 };
 
 const useStyles = makeStyles(styles);
 
 export default function TableList() {
   const classes = useStyles();
+
+  const [selectedDepartment, setSelectedDepartment] = useState();
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    if (selectedDepartment)
+      fetch(`https://randomuser.me/api/?seed=${selectedDepartment}&results=10`)
+        .then((x) => x.json())
+        .then((x) => setUsers(x.results));
+  }, [selectedDepartment]);
+
   return (
     <GridContainer>
       <GridItem xs={12} sm={12} md={12}>
         <Card>
           <CardHeader color="primary">
-            <h4 className={classes.cardTitleWhite}>Simple Table</h4>
+            <h4 className={classes.cardTitleWhite}>Departments</h4>
             <p className={classes.cardCategoryWhite}>
-              Here is a subtitle for this table
+              List of all available departments
             </p>
           </CardHeader>
-          <CardBody>
+          <CardBody className={classes.departmentTable}>
             <Table
               tableHeaderColor="primary"
-              tableHead={["Name", "Country", "City", "Salary"]}
-              tableData={[
-                ["Dakota Rice", "Niger", "Oud-Turnhout", "$36,738"],
-                ["Minerva Hooper", "Curaçao", "Sinaai-Waas", "$23,789"],
-                ["Sage Rodriguez", "Netherlands", "Baileux", "$56,142"],
-                ["Philip Chaney", "Korea, South", "Overland Park", "$38,735"],
-                ["Doris Greene", "Malawi", "Feldkirchen in Kärnten", "$63,542"],
-                ["Mason Porter", "Chile", "Gloucester", "$78,615"],
+              tableHead={[
+                "",
+                "department",
+                "Location",
+                "First Name",
+                "Last Name",
               ]}
+              tableData={data.departments.map((x) => [
+                <Radio
+                  key={x.department}
+                  checked={selectedDepartment === x.department}
+                  onChange={() => {
+                    setSelectedDepartment(x.department);
+                    setUsers([]);
+                  }}
+                />,
+                x.department,
+                x.location,
+                x.manager.name.first,
+                x.manager.name.last,
+              ])}
             />
           </CardBody>
         </Card>
@@ -73,37 +104,26 @@ export default function TableList() {
         <Card plain>
           <CardHeader plain color="primary">
             <h4 className={classes.cardTitleWhite}>
-              Table on Plain Background
+              {selectedDepartment ?? "Please select a department."}
             </h4>
             <p className={classes.cardCategoryWhite}>
-              Here is a subtitle for this table
+              {selectedDepartment &&
+                `Here is a list of all employees in the ${selectedDepartment} department.`}
             </p>
           </CardHeader>
           <CardBody>
-            <Table
-              tableHeaderColor="primary"
-              tableHead={["ID", "Name", "Country", "City", "Salary"]}
-              tableData={[
-                ["1", "Dakota Rice", "$36,738", "Niger", "Oud-Turnhout"],
-                ["2", "Minerva Hooper", "$23,789", "Curaçao", "Sinaai-Waas"],
-                ["3", "Sage Rodriguez", "$56,142", "Netherlands", "Baileux"],
-                [
-                  "4",
-                  "Philip Chaney",
-                  "$38,735",
-                  "Korea, South",
-                  "Overland Park",
-                ],
-                [
-                  "5",
-                  "Doris Greene",
-                  "$63,542",
-                  "Malawi",
-                  "Feldkirchen in Kärnten",
-                ],
-                ["6", "Mason Porter", "$78,615", "Chile", "Gloucester"],
-              ]}
-            />
+            {selectedDepartment && (
+              <Table
+                tableHeaderColor="primary"
+                tableHead={["", "Name", "Country", "City"]}
+                tableData={users.map((x) => [
+                  <Avatar key={x.id.name} src={x.picture.thumbnail} />,
+                  x.name.first,
+                  x.location.country,
+                  x.location.city,
+                ])}
+              />
+            )}
           </CardBody>
         </Card>
       </GridItem>
